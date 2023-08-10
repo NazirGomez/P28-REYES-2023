@@ -1,0 +1,236 @@
+#The following code was used to plot the data from the first 4 figures. This was done in google colaboratory platform due to its convenience of use. The Riemann surfaces and the poles were done using a student-liscenced version of Mathematica.
+#To start off with the Python code, make sure to download the necesarry files, upload them to your google drive, and mount your drive to your colaboratory notebook. This is essential if you want to reproduce the exact same thing I did.
+
+#Navigate to the directory where the first file is located.
+file_path_1 = '/content/drive/MyDrive/pipi-I_1_Estabrooks.dat'
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+#Define your data columns. This can be done in Excel as well. I chose Python for convenience of the data manipulation.
+x = data[:, 0]
+y = data[:, 1]
+errors = data[:, 2]  #Third column contains errors.
+y_1_radians = np.deg2rad(y) #The data in the file has delta in degrees. You have to convert it to rad.
+errors_1 = np.deg2rad(errors) #Same thing as with the y. Errors need to be converted to rad.
+#Create the scatter plot with error bars.
+plt.figure(figsize=(10, 6))
+plt.errorbar(x, y_1_radians, yerr=errors_1, fmt='o', color='black', markersize=3, capsize=3)
+
+#Labels and title.
+plt.xlabel(r'$\sqrt{s}$ (MeV)')
+plt.ylabel(r'$\delta$ (rad)')
+plt.title(r'$\pi^+ \pi^-$ scattering cross section (Estabrooks)')
+
+#Show the plot.
+plt.grid(True)
+plt.show()
+
+#This is the plot for the file pipi--I_1_Estabrooks.dat.
+
+#Now on to including the model in this data.
+
+#Firstly, define mass of pion.
+m = 139.6 #MeV/c^2 or just MeV in natural units
+
+from scipy.optimize import curve_fit
+
+#Define the model function.
+def model_function(s, a, b, c, d):
+    pcm_sq = s / 4 - m**2  # Calculate p_cms^2
+    threshold_expansion = a + b * pcm_sq + c * pcm_sq**2 + d * pcm_sq**3
+    return pcm_sq * threshold_expansion
+
+data = np.loadtxt(file_path_1)
+x = data[:, 0]  # sqrt(s) in MeV
+y = data[:, 1]  # Delta in degrees
+
+#Convert degrees to radians. As before.
+y_1_radians = np.deg2rad(y)
+
+#Calculate p_cm * cot(delta).
+pcm_cot_delta = x * np.cos(y_1_radians) / np.sin(y_1_radians)
+
+#Initial guesses for parameters:
+initial_a = 0.354566
+initial_b = 0.0175
+initial_c = 38
+initial_d = 0
+initial_guess = [initial_a, initial_b, initial_c, initial_d]
+
+#Fit the model to the transformed data.
+params, covariance = curve_fit(model_function, x, pcm_cot_delta, p0=initial_guess)
+
+#Generate predicted values using the fitted model.
+y_predicted = model_function(x, *params)
+
+#Calculate the error of p_cm * cot(delta).
+cot_delta_errors = np.abs(pcm_cot_delta) * np.sqrt(errors_1**2 / np.sin(y_1_radians)**2)
+
+#Calculate the residuals.
+residuals = (pcm_cot_delta - y_predicted) / cot_delta_errors
+
+#Compute the reduced chi-squared value.
+dof = len(x) - len(params)
+chi2_reduced = np.sum(residuals**2) / dof
+
+#Calculate mean squared error on training data.
+mse = np.mean(residuals**2)
+
+#Print the reduced chi-squared value, mean squared error and degrees of freedom.
+print(f"Reduced chi-squared value: {chi2_reduced:.6f}")
+print(f"Degrees of freedom: {dof}")
+print(f"Mean Squared Error: {mse:.6f}")
+
+
+plt.figure(figsize=(10, 6))
+plt.errorbar(x, pcm_cot_delta, yerr=cot_delta_errors, fmt='o', color='black', markersize=3, capsize=3, label='$K^{-1}$ data')
+
+#Plot the fitted model.
+plt.plot(x, y_predicted, color='red', label='$K^{-1}$ model')
+
+plt.xlabel(r'$\sqrt{s}$ (MeV)')
+plt.ylabel(r'$p_{cm} \cdot \cot(\delta)$')
+plt.title(r'$Estabrooks \ K^{-1} \ model \ fit$')
+
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#Check for overfitting using bias created. One could improve on this criteria with more rigorous statistics.
+if mse > chi2_reduced:
+    print("The model may be overfitting.")
+else:
+    print("The model is performing reasonably.")
+
+#Now you're done with one file. For the other one, it is in essence the same thing.
+
+file_path_3 = '/content/drive/MyDrive/pipi_delta_L1_Estabrooks_NPB79_301.dat'
+
+data_3 = np.loadtxt(file_path_3)
+
+x_3 = data_3[:, 0]
+y_3 = data_3[:, 1]
+y_3_radians = np.deg2rad(y_3)
+errors_3 = data_3[:, 2] 
+errors_3_rad = np.deg2rad(errors_3)
+
+
+plt.figure(figsize=(10, 6))
+plt.errorbar(x_3, y_3_radians, yerr=errors_3_rad, fmt='o', color='black', markersize=3, capsize=3)
+plt.xlabel(r'$\sqrt{s}$ (MeV)')
+plt.ylabel(r'$\delta$ (rad)')
+plt.title(r'$\pi^+ \pi^-$ scattering cross section (L1 Estabrooks)')
+plt.grid(True)
+plt.show()
+
+#This is the plot for the file pipi_delta_L1_Estabrooks_NPB79_301.dat.
+
+#For the model of this one, repeat the same thing with the needed variables:
+
+def model_function(s, a, b, c, d):
+    pcm_sq = s / 4 - m**2  # Calculate p_cms^2
+    threshold_expansion = a + b * pcm_sq + c * pcm_sq**2 + d * pcm_sq**3
+    return pcm_sq * threshold_expansion
+
+
+data_3 = np.loadtxt(file_path_3)
+x_3 = data_3[:, 0]  # sqrt(s) in MeV
+y_3 = data_3[:, 1]  # Delta in degrees
+
+
+y_3_radians = np.deg2rad(y_3)
+
+#Calculate p_cm * cot(delta).
+pcm_cot_delta_3 = x_3 * np.cos(y_3_radians) / np.sin(y_3_radians)
+
+#Initial guesses for parameters:
+initial_a = 10
+initial_b = 25
+initial_c = 68
+initial_d = 24
+initial_guess = [initial_a, initial_b, initial_c, initial_d]
+
+
+params, covariance = curve_fit(model_function, x_3, pcm_cot_delta_3, p0=initial_guess)
+
+
+y_predicted = model_function(x_3, *params)
+
+
+cot_delta_errors = np.abs(pcm_cot_delta_3) * np.sqrt(errors_3_rad**2 / np.sin(y_3_radians)**2)
+
+
+residuals = (pcm_cot_delta_3 - y_predicted) / cot_delta_errors
+
+
+dof = len(x_3) - len(params)
+chi2_reduced = np.sum(residuals**2) / dof
+
+
+mse = np.mean(residuals**2)
+
+
+print(f"Reduced chi-squared value: {chi2_reduced:.6f}")
+print(f"Degrees of freedom: {dof}")
+print(f"Mean Squared Error: {mse:.6f}")
+
+
+plt.figure(figsize=(10, 6))
+plt.errorbar(x_3, pcm_cot_delta_3, yerr=cot_delta_errors, fmt='o', color='black', markersize=3, capsize=3, label='$K^{-1}$ data')
+
+plt.plot(x_3, y_predicted, color='red', label='$K^{-1}$ model')
+
+
+plt.xlabel(r'$\sqrt{s}$ (MeV)')
+plt.ylabel(r'$p_{cm} \cdot \cot(\delta)$')
+plt.title(r'$L1 \ Estabrooks \ K^{-1} \ model \ fit$')
+plt.legend()
+
+
+plt.grid(True)
+plt.show()
+
+#Check for overfitting.
+if mse > chi2_reduced:
+    print("The model may be overfitting.")
+else:
+    print("The model is performing reasonably.")
+
+
+#Now for the Mathematica code. 
+#After finding your models, plug in the values for a, b, c, and d into your T(s) equation. Rearrange the equations relating K^-1 and T algebraically.
+#After the algebra, make sure you have what you need to plot absolute T (or absolute T^2) over the real and imaginary parts of sqrt(s). This is where I made a mistake very likely in my project.
+#As I was not entirely familiar with plotting Riemann surfaces in Mathematica. And also, I plotted sqrt(s)/2*(my real polynomial) - ip_cm. This may also have been where I've gone wrong. As I was somewhat plotting K^(-1) (see Eq. 6 in my project paper).
+
+#For the Riemann surface and pole of the parametrization used for Estabrooks:
+
+#Riemann surface:
+f[z_] := 
+ Sqrt[z]/(2*(0.354566 + 0.0175*(z/4 - 139.6^2) + 
+      38*(z/4 - 139.6^2)^2 - I*Sqrt[z/4 - 139.6^2]))
+
+Plot3D[Abs[f[x + I*y]], {x, -2000, 2000}, {y, -2000, 2000}, 
+ MeshFunctions -> {Re[f[#1 + I*#2]] &, Im[f[#1 + I*#2]] &}, 
+ MeshStyle -> {{Thick, Blue}, {Thick, Red}}, Mesh -> {{0}}, 
+ BoundaryStyle -> None, Boxed -> True, Axes -> True, PlotRange -> All,
+  Lighting -> "Neutral", PlotPoints -> 100, 
+ AxesLabel -> {"Re E (MeV)", "Im E (MeV)", "|T|"}, Ticks -> Automatic,
+  BoxRatios -> {1, 1, 1}, PlotLegends -> Automatic, 
+ PlotLabel -> "Riemann Surface of Absolute T", 
+ AxesStyle -> Directive[Black, Thick]]
+
+#Poles:
+poles = NSolve[Denominator[f[z]] == 0, z]
+
+Print["Poles:", poles]
+
+#For the Riemann surface and pole of the parametrization used for L1 Estabrooks:
+
+f[z_] := 
+ Sqrt[z]/(2*(10 + 25*(z/4 - 139.6^2) + 68*(z/4 - 139.6^2)^2 + 
+       24*(z/4 - 139.6^2)^3) - I*Sqrt[z/4 - 139.6^2])
+
+poles = NSolve[Denominator[f[z]] == 0, z]
+
+Print["Poles:", poles]

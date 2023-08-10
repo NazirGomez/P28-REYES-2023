@@ -231,6 +231,17 @@ f[z_] :=
  Sqrt[z]/(2*(10 + 25*(z/4 - 139.6^2) + 68*(z/4 - 139.6^2)^2 + 
        24*(z/4 - 139.6^2)^3) - I*Sqrt[z/4 - 139.6^2])
 
+Plot3D[Abs[f[x + I*y]], {x, -2000, 2000}, {y, -2000, 2000}, 
+ MeshFunctions -> {Re[f[#1 + I*#2]] &, Im[f[#1 + I*#2]] &}, 
+ MeshStyle -> {{Thick, Blue}, {Thick, Red}}, Mesh -> {{0}}, 
+ BoundaryStyle -> None, Boxed -> True, Axes -> True, PlotRange -> All,
+  Lighting -> "Neutral", PlotPoints -> 100, 
+ AxesLabel -> {"Re E (MeV)", " Im E (MeV)", "|T|"}, 
+ Ticks -> Automatic, BoxRatios -> {1, 1, 1}, PlotLegends -> Automatic,
+  PlotLabel -> "Riemann Surface of Absolute T", 
+ AxesStyle -> Directive[Black, Thick]]
+
+#Poles:
 poles = NSolve[Denominator[f[z]] == 0, z]
 
 Print["Poles:", poles]
